@@ -11,8 +11,10 @@ import (
 )
 
 func main() {
-	if err := checks.CheckForUpdates(); err != nil {
-		fmt.Println("Error checking for updates:", err)
+	u := checks.NewUpdateChecker()
+	err := u.Init()
+	if err != nil {
+		fmt.Printf("Error checking for updates: %v\n", err)
 		return
 	}
 	cmd.Execute()

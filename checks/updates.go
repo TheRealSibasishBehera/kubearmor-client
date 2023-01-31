@@ -9,11 +9,12 @@ import (
 	"strings"
 )
 
-func CheckForUpdates() error {
-	client := github.NewClient(nil)
+type UpdateChecker struct {
+	Client *github.Client
+}
 
-	// Fetch all releases from the GitHub API
-	releases, _, err := client.Repositories.ListReleases(context.Background(),
+func (c *UpdateChecker) FetchReleases() ([]*github.RepositoryRelease, error) {
+	releases, _, err := c.Client.Repositories.ListReleases(context.Background(),
 		"kubearmor",
 		"kubearmor-client",
 		&github.ListOptions{
@@ -22,25 +23,31 @@ func CheckForUpdates() error {
 		},
 	)
 	if err != nil {
-		fmt.Println("Error fetching releases:", err)
-		return err
+		return nil, fmt.Errorf("Error fetching releases from GitHub: %v", err)
 	}
+	return releases, nil
+}
 
-	// Find the latest release with the keyword "mandatory" in its release notes
+func (c *UpdateChecker) GetLatestMandatoryRelease(releases []*github.RepositoryRelease) (*github.RepositoryRelease, error) {
 	var latestMandatoryRelease *github.RepositoryRelease
 	for _, release := range releases {
-		if strings.Contains(*release.Body, "mandatory") {
+		if strings.Contains(*release.Body, "mandatory") || strings.Contains(*release.Body, "MANDATORY") {
 			latestMandatoryRelease = release
 			break
 		}
 	}
-
-	// Compare the current version with the latest release version
-	currentVersion := selfupdate.GitSummary
-	if err != nil {
-		return err
+	if latestMandatoryRelease == nil {
+		return nil, nil
 	}
-	if latestMandatoryRelease != nil && !strings.EqualFold(currentVersion, *latestMandatoryRelease.TagName) {
+	return latestMandatoryRelease, nil
+}
+
+func (c *UpdateChecker) CompareVersions(currentVersion string, latestMandatoryRelease *github.RepositoryRelease) error {
+	if latestMandatoryRelease == nil {
+		color.HiGreen("The client is up to date.")
+		return nil
+	}
+	if !strings.EqualFold(currentVersion, *latestMandatoryRelease.TagName) {
 		color.HiMagenta("A mandatory update is available (current version: %s, latest release: %s).\n",
 			currentVersion,
 			*latestMandatoryRelease.TagName,
@@ -48,6 +55,38 @@ func CheckForUpdates() error {
 	} else {
 		fmt.Println("The client is up to date.")
 	}
+	return nil
+}
 
+func (c *UpdateChecker) CheckForUpdates() error {
+	releases, err := c.FetchReleases()
+	if err != nil {
+		return err
+	}
+
+	latestMandatoryRelease, err := c.GetLatestMandatoryRelease(releases)
+	if err != nil {
+		return err
+	}
+
+	currentVersion := selfupdate.GitSummary
+	err = c.CompareVersions(currentVersion, latestMandatoryRelease)
+	if err != nil {
+		return fmt.Errorf("Error comparing versions: %v", err)
+	}
+	return nil
+}
+
+func NewUpdateChecker() *UpdateChecker {
+	return &UpdateChecker{
+		Client: github.NewClient(nil),
+	}
+}
+
+func (c *UpdateChecker) Init() error {
+	err := c.CheckForUpdates()
+	if err != nil {
+		return err
+	}
 	return nil
 }
