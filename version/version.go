@@ -23,7 +23,7 @@ func PrintVersion(c *k8s.Client) error {
 		color.HiMagenta("update available version " + latestVer)
 		color.HiMagenta("use [karmor selfupdate] to update to latest")
 	}
-	kubearmorVersion, err := getKubeArmorVersion(c)
+	kubearmorVersion, err := GetKubeArmorVersion(c)
 	if err != nil {
 		return nil
 	}
@@ -35,7 +35,7 @@ func PrintVersion(c *k8s.Client) error {
 	return nil
 }
 
-func getKubeArmorVersion(c *k8s.Client) (string, error) {
+func GetKubeArmorVersion(c *k8s.Client) (string, error) {
 	pods, err := c.K8sClientset.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{LabelSelector: "kubearmor-app=kubearmor"})
 	if err != nil {
 		return "", err
