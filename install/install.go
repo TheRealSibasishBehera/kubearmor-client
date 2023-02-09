@@ -6,9 +6,9 @@ package install
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -36,6 +36,41 @@ type Options struct {
 	Force          bool
 	Save           bool
 	Animation      bool
+	Env            EnvOption
+}
+
+type EnvOption struct {
+	Auto bool
+	Env  string
+}
+
+func IsValidEnvironment(envOption string, options *Options) bool {
+	switch envOption {
+	case "k3s":
+		options.Env.Env = "k3s"
+	case "microK8s":
+		options.Env.Env = "k3s"
+	case "minikube":
+		options.Env.Env = "k3s"
+	case "gke":
+		options.Env.Env = "k3s"
+	case "bottlerocket":
+		options.Env.Env = "k3s"
+	case "eks":
+		options.Env.Env = "k3s"
+	case "docker":
+		options.Env.Env = "k3s"
+	case "oke":
+		options.Env.Env = "k3s"
+	case "generic":
+		options.Env.Env = "k3s"
+	default:
+		{
+			fmt.Println("Invalid argument")
+			return false
+		}
+	}
+	return true
 }
 
 var animation bool
@@ -117,12 +152,18 @@ func checkPods(c *k8s.Client) int {
 
 // K8sInstaller for karmor install
 func K8sInstaller(c *k8s.Client, o Options) error {
-	animation = o.Animation
-	env := AutoDetectEnvironment(c)
-	if env == "none" {
-		return errors.New("unsupported environment or cluster not configured correctly")
+	var env string
+	if o.Env.Auto {
+		env = AutoDetectEnvironment(c)
+		if env == "none" {
+			return errors.New("unsupported environment or cluster not configured correctly")
+		}
+		printMessage("😄   Auto Detected Environment : "+env, true)
+	} else {
+		env = o.Env.Env
+		printMessage("😄   Environment : "+env, true)
 	}
-	printMessage("😄   Auto Detected Environment : "+env, true)
+	animation = o.Animation
 
 	var printYAML []interface{}
 

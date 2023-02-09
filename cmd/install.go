@@ -17,6 +17,12 @@ var installCmd = &cobra.Command{
 	Long:  `Install KubeArmor in a Kubernetes Clusters`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		installOptions.Animation = true
+		//check for valid argument
+		if len(args) > 1 {
+			if install.IsValidEnvironment(args[0], &installOptions) {
+				installOptions.Env.Auto = false
+			}
+		}
 		if err := install.K8sInstaller(client, installOptions); err != nil {
 			return err
 		}
@@ -31,5 +37,4 @@ func init() {
 	installCmd.Flags().StringVarP(&installOptions.KubearmorImage, "image", "i", "kubearmor/kubearmor:stable", "Kubearmor daemonset image to use")
 	installCmd.Flags().StringVarP(&installOptions.Audit, "audit", "a", "", "Kubearmor Audit Posture Context [all,file,network,capabilities]")
 	installCmd.Flags().BoolVar(&installOptions.Save, "save", false, "Save KubeArmor Manifest ")
-
 }
