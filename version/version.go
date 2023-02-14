@@ -35,6 +35,7 @@ func PrintVersion(c *k8s.Client) error {
 	return nil
 }
 
+// GetKubeArmorVersion Returns the current version of KubeArmor
 func GetKubeArmorVersion(c *k8s.Client) (string, error) {
 	pods, err := c.K8sClientset.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{LabelSelector: "kubearmor-app=kubearmor"})
 	if err != nil {

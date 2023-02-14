@@ -1,3 +1,4 @@
+// Package checks provides utility for checks in karmor CLI tool
 package checks
 
 import (
@@ -9,10 +10,12 @@ import (
 	"strings"
 )
 
+// UpdateChecker structure
 type UpdateChecker struct {
 	Client *github.Client
 }
 
+// FetchReleases Fetches all the releases from kubearmor-client repository
 func (c *UpdateChecker) FetchReleases() ([]*github.RepositoryRelease, error) {
 	releases, _, err := c.Client.Repositories.ListReleases(context.Background(),
 		"kubearmor",
@@ -28,6 +31,7 @@ func (c *UpdateChecker) FetchReleases() ([]*github.RepositoryRelease, error) {
 	return releases, nil
 }
 
+// GetLatestMandatoryRelease Gets the mandatory latest release
 func (c *UpdateChecker) GetLatestMandatoryRelease(releases []*github.RepositoryRelease) (*github.RepositoryRelease, error) {
 	var latestMandatoryRelease *github.RepositoryRelease
 	for _, release := range releases {
@@ -42,6 +46,7 @@ func (c *UpdateChecker) GetLatestMandatoryRelease(releases []*github.RepositoryR
 	return latestMandatoryRelease, nil
 }
 
+// CompareVersions Compares the current karmor version and the mandatory release present in releases
 func (c *UpdateChecker) CompareVersions(currentVersion string, latestMandatoryRelease *github.RepositoryRelease) error {
 	if latestMandatoryRelease == nil {
 		color.HiGreen("The client is up to date.")
@@ -58,6 +63,7 @@ func (c *UpdateChecker) CompareVersions(currentVersion string, latestMandatoryRe
 	return nil
 }
 
+// CheckForUpdates Checks for releases in kubearmor-client repository and displays a log if update is present
 func (c *UpdateChecker) CheckForUpdates() error {
 	releases, err := c.FetchReleases()
 	if err != nil {
@@ -77,12 +83,14 @@ func (c *UpdateChecker) CheckForUpdates() error {
 	return nil
 }
 
+// NewUpdateChecker Returns a new instance of UpdateChecker
 func NewUpdateChecker() *UpdateChecker {
 	return &UpdateChecker{
 		Client: github.NewClient(nil),
 	}
 }
 
+// Init function for call UpdateChecker functions
 func (c *UpdateChecker) Init() error {
 	err := c.CheckForUpdates()
 	if err != nil {
