@@ -39,7 +39,7 @@ type Options struct {
 	Aggregation   bool
 }
 
-// Summary : Get summary on pods
+// Summary  Get summary on pods
 func Summary(c *k8s.Client, o Options) error {
 	gRPC := ""
 
